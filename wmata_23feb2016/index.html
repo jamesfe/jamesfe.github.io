@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>wmata failcast presentation</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Predicting WMATA Failures</h1>
+					<h3>(Or delays...kinda)</h3>
+					<p>
+						<small>Created by <a href="mailto:james.ferrara@gmail.com">Jimmy Ferrara</a> / <a href="http://twitter.com/jimmysthoughts">@jimmysthoughts</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>One day...</h2>
+					<p>
+						I was presented with a beautiful 7000 series train.
+                        <img height="30%" width="30%" data-src="./img/7000_series.jpg">
+						<p class="fragment">...and an hour-long wait between Rosslyn and Courthouse while we waited for someone to pull our broken down train out of the tunnel.</p>
+					</p>
+				</section>
+
+				<section>
+					<h2>Tracks & weather, not train.</h2>
+					<p>
+			            <img height="50%" width="50%" data-src="./img/wmata_wash_post_article.png">
+                        <br />
+                        <a href="https://www.washingtonpost.com/local/trafficandcommuting/metro-blames-laws-of-nature-for-cracked-track-rails-other-transit-systems-agree/2015/01/10/642a4de2-9813-11e4-aabd-d0b93ff613d5_story.html">Washington Post Article (Jan 10, 2015)</a>
+                    </p>
+				</section>
+
+				<section>
+                    <h2>What if I knew ahead of time??</h2>
+			        <ul>
+                        <li>We know the weather
+                        <li>If we can measure the impact
+                        <li>We can predict* the major impacts
+                    </ul>
+                    <p class="fragment">
+                    *Ha ha ha
+                    </p>
+                </section>
+
+				<section>
+                    <h2>The Plan</h2>
+			        <ul>
+                        <li>Download a bunch of weather data
+                        <li>Find a way to measure Metro delays
+                        <li>Machine Learning renders some "Answers"
+                    </ul>
+                </section>
+
+				<section>
+                    <h2>Data: Weather</h2>
+			        <ul>
+                        <li><a href="http://www.forecast.io">forecast.io</a>
+                        <li>Weather anywhere on earth, historic or forecast, varying quality depending on where
+                        <li>$0.0001 per API call (I spent $0.32 on this project.)
+                        <li>I collect weather at 16 WMATA stations (above ground + Metro Center)
+                    </ul>
+                </section>
+
+                <section>
+					<pre><code class="hljs" data-trim contenteditable>
+            {
+                "apparentTemperature": 30.71,
+                "cloudCover": 0.12,
+                "dewPoint": 23.78,
+                "humidity": 0.66,
+                "icon": "clear-night",
+                "precipIntensity": 0,
+                "precipProbability": 0,
+                "pressure": 1019.03,
+                "summary": "Clear",
+                "temperature": 34.1,
+                "time": 1420171200,
+                "visibility": 10,
+                "windBearing": 223,
+                "windSpeed": 3.81
+            }
+        ],
+        "icon": "clear-day",
+        "summary": "Clear throughout the day."
+    },
+    "latitude": 38.8776011238,
+    "longitude": -77.2726222569,
+    "offset": -5,
+    "timezone": "America/New_York"
+}
+                    </code>
+                </section>
+
+				<section>
+                    <h2>Data: WMATA Delays/Failures</h2>
+			        <ul>
+                        <li>Rail Incidents (via API)
+                        <li>Freetext blob
+                        <li>Historical data unknown?
+                        <li>Not dependable
+                    </ul>
+                </section>
+
+				<section>
+                    <h2>Data: WMATA Delays/Failures</h2>
+			        <ul>
+                        <li>Service Report Logs
+                        <li>Still freetext, but archives available
+                        <li>I can parse this and get minutes delayed per day.
+                    </ul>
+                </section>
+
+				<section>
+                    <img height="80%" width="80%" data-src="./img/wmata_log_example.png">
+                </section>
+
+                <section>
+                    <h2>Data: WMATA Delays/Failures</h2>
+			        <ul>
+                        <li>Quick set of scripts to extract something useful
+                        <li><a href="https://github.com/jamesfe/metro_service_extract">github.com/jamesfe/metro_service_extract</a>
+                        <li>Scrapes WMATA website, parses data, outputs CSV
+                        <li>Pull requests welcome
+                        <li>Props to Zach Rausnitz at WCP (<a href="http://www.twitter.com/rausnitz/">@rausnitz</a>) for the idea
+                    </ul>
+                </section>
+
+				<section>
+                    <h2>The rest is history...</h2>
+			        <ul>
+                        <li>Used Python &amp; scikit-learn to generate a model
+                        <li>Averaged &amp; predicted delays
+                        <li>Scaled data appropriately
+                        <li>Random Forest Classifier
+                        <li>Outputs are delay range &amp; probability
+                    </ul>
+                </section>
+
+                <section>
+                    <img data-src="./img/failcast.png">
+                </section>
+
+				<section>
+                    <h2>Needs improvement...</h2>
+			        <ul>
+                        <li>Average delay isn't a good metric
+                        <li>Model needs tweaking (5-10 min @ 53.78% prob very common)
+                        <li>Better data (More days of weather, better track &amp; maintenance)
+                        <li>Will open-source more code shortly, welcome contributors (esp new folks!)
+                    </ul>
+                </section>
+
+				<section>
+                    <h2>Contact Me</h2>
+			        <ul>
+                        <li><a href="mailto:james.ferrara@gmail.com">james.ferrara@gmail.com</a> / <a href="http://www.twitter.com/jimmysthoughts">@jimmysthoughts</a>
+                        <li>My company is amazing and hiring
+                        <li><a href="mailto:jferrara@endgame.com">jferrara@endgame.com</a><br />
+                        <img data-src="./img/endgame.png" style="border: 0px; background: none">
+                    </ul>
+                </section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
